@@ -96,9 +96,9 @@ def main():
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-a', '--all', action='store_true',
                        help="Results for all States")
-    parser.add_argument('-s', '--state',
+    group.add_argument('-s', '--state',
                         help="Use 2 letter State")
-    parser.add_argument('-c', '--country',
+    group.add_argument('-c', '--country',
                         help="Use 2 letter Country")
     parser.add_argument('-d', '--date', default=d_date.strftime("%d"),
                         help="Use 2 digit day, default is minus 1 day")

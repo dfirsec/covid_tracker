@@ -75,21 +75,23 @@ def get_states(date=None):
         print(f"\n{Fore.RED}Total: {sum(sp):,} | Deaths: {sum(sd):,} ({round(sum(sd)/sum(sp)*100, 2)}%){Style.RESET_ALL}")  # nopep8
 
 
-def get_world(date=None, state=None, country=None):
+def get_world(date=None, state=None, country=None, county=None):
     url = f"{W_URL}{today.strftime('%m')}-{date}-{today.year}.csv"
     data = StringIO(connect(url).text)
     pd.set_option('display.max_rows', None)
     columns = [1, 2, 3, 4, 7, 8, 9]
     df = pd.read_csv(data, delimiter=',', usecols=columns, keep_default_na=False)  # nopep8
-
     if 'Deaths' in df:
         df["Percentage"] = (100. * df['Deaths']/df['Confirmed']).round(2).astype(str) + '%'  # nopep8
         if country:
             df = df.rename(columns={'Admin2': ''})
-            print(f"{df.loc[df['Country_Region'] == country]}")
+            print(df.loc[df['Country_Region'] == country])
+        if county:
+            df = df.rename(columns={'Admin2': 'County'})
+            print(df.loc[df['County'] == county])
         if state:
             df = df.rename(columns={'Admin2': 'County'})
-            print(f"{df.loc[df['Province_State'] == state]}")
+            print(df.loc[df['Province_State'] == state])
 
 
 def main():
@@ -99,10 +101,12 @@ def main():
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-a', '--all', action='store_true',
                        help="Results for all States")
+    group.add_argument('-w', '--country',
+                       help="Use 2 letter Country")
     group.add_argument('-s', '--state',
                        help="Use 2 letter State")
-    group.add_argument('-c', '--country',
-                       help="Use 2 letter Country")
+    group.add_argument('-c', '--county',
+                       help="Use 2 letter County")
     parser.add_argument('-d', '--date', default=d_date.strftime("%d"),
                         help="Use 2 digit day, default is minus 1 day")
     args = parser.parse_args()
@@ -122,11 +126,15 @@ def main():
 
     if args.state:
         try:
-            get_world(date=args.date,
-                          state=JSON_DATA['states'][args.state.upper()])
+            get_world(date=args.date, state=JSON_DATA['states'][args.state.upper()]) # nopep8
         except KeyError:
             sys.exit(f"[ERROR] The state '{args.state}' was not found.")
 
+    if args.county:
+        try:
+            get_world(date=args.date,  county=args.county) # nopep8
+        except KeyError:
+                    sys.exit(f"[ERROR] The state '{args.state}' was not found.")
 
 if __name__ == "__main__":
     main()

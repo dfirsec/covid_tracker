@@ -15,8 +15,7 @@ from requests.exceptions import (ConnectionError, HTTPError, RequestException,
 
 init()
 
-today = date.today()
-now = datetime.now()
+TODAY = date.today()
 S_URL = 'https://covidtracking.com/api'
 W_URL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"
 BASE_DIR = Path(__file__).resolve().parent
@@ -53,7 +52,7 @@ def get_state_info(state=None):
 
 
 def get_states(date=None):
-    url = S_URL + f"/states/daily?date={today.year}{today.strftime('%m')}{date}"  # nopep8
+    url = S_URL + f"/states/daily?date={TODAY.year}{TODAY.strftime('%m')}{date}"  # nopep8
     if connect(url).json():
         sp = []  # state positives
         sd = []  # state deaths
@@ -76,7 +75,7 @@ def get_states(date=None):
 
 
 def get_world(date=None, state=None, country=None, county=None):
-    url = f"{W_URL}{today.strftime('%m')}-{date}-{today.year}.csv"
+    url = f"{W_URL}{TODAY.strftime('%m')}-{date}-{TODAY.year}.csv"
     data = StringIO(connect(url).text)
     pd.set_option('display.max_rows', None)
     columns = [1, 2, 3, 4, 7, 8, 9]
@@ -132,7 +131,7 @@ def main():
 
     if args.county:
         try:
-            get_world(date=args.date,  county=args.county) # nopep8
+            get_world(date=args.date, county=args.county.capitalize()) # nopep8
         except KeyError:
                     sys.exit(f"[ERROR] The state '{args.state}' was not found.")
 

@@ -22,6 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA = BASE_DIR.joinpath('data.json')
 
 # Console Colors
+CYAN = Fore.CYAN
 GREEN = Fore.GREEN
 RED = Fore.RED
 RESET = Style.RESET_ALL
@@ -48,65 +49,38 @@ def connect(url):
         sys.exit("Issue encountered:", RequestException)
 
 
-def get_state_info(state=None):
-    url = S_URL + f"/states/info?state={state}"
-    if connect(url).json():
-        info = connect(url).json()
-        print(f"\nState Link:\n{info['covid19Site']:<6}\n")
-        print(f"Notes:\n{info['notes']:<6}")
-
-
-def get_states(date=None):
-    url = S_URL + f"/states/daily?date={TODAY.year}{TODAY.strftime('%m')}{date}"  # nopep8
-    if connect(url).json():
-        sp = []  # state positives
-        sd = []  # state deaths
-        for stats in connect(url).json():
-            state = stats['state']
-            if 'death' in stats and stats['death'] != 0:
-                sp.append(stats['positive'])
-                sd.append(stats['death'])
-                deaths = stats['death']
-                positive = stats['positive']
-                percent = stats['death'] / stats['positive'] * 100
-                percent = round(percent, 2)
-                print(f"{state:3} Positive: {positive:<8,} Deaths: {deaths:<6,} {percent}%")  # nopep8
-            elif 'death' in stats:
-                deaths = stats['death']
-                positive = stats['positive']
-                percent = stats['death'] / stats['positive'] * 100
-                percent = round(percent, 2)
-                if stats['death'] == 0:
-                    print(f"{GREEN}{state:3} Positive: {positive:<8,} Deaths: {deaths:<6,} {percent}%{RESET}")  # nopep8
-                else:
-                    print(f"{state:3} Positive: {positive:<8,} Deaths: {deaths:<6,} {percent}%")  # nopep8
-
-        print(f"\n{RED}Total: {sum(sp):,} | Deaths: {sum(sd):,} ({round(sum(sd)/sum(sp)*100, 2)}%){RESET}")  # nopep8
-
-
 def get_world(date=None, state=None, country=None, county=None):
     url = f"{W_URL}{TODAY.strftime('%m')}-{date}-{TODAY.year}.csv"
     data = StringIO(connect(url).text)
     pd.set_option('display.max_rows', None)
-    columns = [1, 2, 3, 4, 7, 8, 9]
-    df = pd.read_csv(data, delimiter=',', usecols=columns, keep_default_na=False)  # nopep8
-    if 'Deaths' in df:
-        df["Percentage"] = (100. * df['Deaths']/df['Confirmed']).round(2).astype(str) + '%'  # nopep8
-        if country:
-            df = df.rename(columns={'Admin2': '', 
-                                    'Province_State': 'Province',
-                                    'Country_Region': 'Country'})
-            print(df.loc[df['Country'] == country])
-        if county:
-            df = df.rename(columns={'Admin2': 'County',
-                                    'Province_State': 'State',
-                                    'Country_Region': 'Country'})
-            print(df.loc[df['County'] == county])
-        if state:
-            df = df.rename(columns={'Admin2': 'County',
-                                    'Province_State': 'State',
-                                    'Country_Region': 'Country'})
-            print(df.loc[df['State'] == state])
+    with pd.option_context('display.colheader_justify', 'left'):
+        columns = [1, 2, 3, 4, 7, 8, 9]
+        df = pd.read_csv(data, delimiter=',', usecols=columns, keep_default_na=False)  # nopep8
+        if 'Deaths' in df:
+            df["Percentage"] = (100. * df['Deaths']/df['Confirmed']).round(2).astype(str) + '%'  # nopep8
+            if country:
+                df = df.rename(columns={'Admin2': '',
+                                        'Province_State': 'Province',
+                                        'Country_Region': 'Country'})
+                print(f"{CYAN}{country}{RESET}\n{('-' * 25)}")
+                country_confirmed = df.loc[df['Country'] == country]
+                print(f"Total Confirmed: {country_confirmed['Confirmed'].sum():>7,}")  #nopep8
+                print(f"Total Deaths: {country_confirmed['Deaths'].sum():>9,}")
+            
+            if state:
+                df = df.rename(columns={'Admin2': 'County',
+                                        'Province_State': 'State',
+                                        'Country_Region': 'Country'})
+                print(df.loc[df['State'] == state].to_string(index=False))
+                state_confirmed = df.loc[df['State'] == state]  #nopep8
+                print(f"{('-' * 25)}\nTotal Confirmed: {state_confirmed['Confirmed'].sum():>7,}")  # nopep8
+                print(f"Total Deaths: {state_confirmed['Deaths'].sum():>9,}")
+                
+            if county:
+                    df = df.rename(columns={'Admin2': 'County',
+                                            'Province_State': 'State',
+                                            'Country_Region': 'Country'})
+                    print(df.loc[df['County'] == county].to_string(index=False))
 
 
 def main():
@@ -114,8 +88,6 @@ def main():
 
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('-a', '--all', action='store_true',
-                       help="Results for all States")
     group.add_argument('-w', '--country',
                        help="Use 2 letter Country")
     group.add_argument('-s', '--state',
@@ -128,28 +100,25 @@ def main():
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
-        sys.exit(1)
-
-    if args.all:
-        get_states(date=args.date)
+        sys.exit(1) 
 
     if args.country:
         try:
             get_world(date=args.date, country=JSON_DATA['countries'][args.country.upper()])  # nopep8
         except KeyError:
-            sys.exit(f"[ERROR] The country '{args.country}' was not found.")
+            sys.exit(f"{RED}[ERROR]{RESET} The country '{args.country}' was not found.")  # nopep8
 
     if args.state:
         try:
             get_world(date=args.date, state=JSON_DATA['states'][args.state.upper()])  # nopep8
         except KeyError:
-            sys.exit(f"[ERROR] The state '{args.state}' was not found.")
+            sys.exit(f"{RED}[ERROR]{RESET} The state '{args.state}' was not found.")
 
     if args.county:
         try:
-            get_world(date=args.date, county=args.county.capitalize())  # nopep8
+            get_world(date=args.date, county=args.county.title())  # nopep8
         except KeyError:
-            sys.exit(f"[ERROR] The state '{args.state}' was not found.")
+            sys.exit(f"{RED}[ERROR]{RESET} The county '{args.county}' was not found.")  # nopep8
 
 
 if __name__ == "__main__":

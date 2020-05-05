@@ -15,7 +15,6 @@ from requests.exceptions import (ConnectionError, HTTPError, RequestException,
 
 
 TODAY = date.today()
-S_URL = 'https://covidtracking.com/api'
 W_URL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"
 BASE_DIR = Path(__file__).resolve().parent
 DATA = BASE_DIR.joinpath('data.json')
@@ -48,6 +47,7 @@ def connect(url):
 
 def get_world(date=None, state=None, country=None, county=None):
     url = f"{W_URL}{TODAY.strftime('%m')}-{date}-{TODAY.year}.csv"
+    print(url)
     data = StringIO(connect(url).text)
     pd.set_option('display.max_rows', None)
     with pd.option_context('display.colheader_justify', 'left'):
@@ -101,6 +101,9 @@ def main():
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
+        
+    if len(args.date) < 2:
+        args.date = '0' + args.date
 
     if args.country:
         try:

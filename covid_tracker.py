@@ -47,7 +47,6 @@ def connect(url):
 
 def get_world(date=None, state=None, country=None, county=None):
     url = f"{W_URL}{TODAY.strftime('%m')}-{date}-{TODAY.year}.csv"
-    print(url)
     data = StringIO(connect(url).text)
     pd.set_option('display.max_rows', None)
     with pd.option_context('display.colheader_justify', 'left'):

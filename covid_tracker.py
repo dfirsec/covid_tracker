@@ -13,7 +13,6 @@ from colorama import Fore, Style, init
 from requests.exceptions import (ConnectionError, HTTPError, RequestException,
                                  Timeout)
 
-init()
 
 TODAY = date.today()
 S_URL = 'https://covidtracking.com/api'
@@ -22,13 +21,11 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA = BASE_DIR.joinpath('data.json')
 
 # Console Colors
+init()
 CYAN = Fore.CYAN
 GREEN = Fore.GREEN
 RED = Fore.RED
 RESET = Style.RESET_ALL
-
-with open(DATA) as json_file:
-    JSON_DATA = json.load(json_file)
 
 
 def connect(url):
@@ -84,6 +81,9 @@ def get_world(date=None, state=None, country=None, county=None):
 
 
 def main():
+    with open(DATA) as json_file:
+        JSON_DATA = json.load(json_file)
+        
     d_date = datetime.today() - timedelta(days=1)
 
     parser = argparse.ArgumentParser()

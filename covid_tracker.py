@@ -104,6 +104,9 @@ def main():
     if len(args.date) < 2:
         args.date = '0' + args.date
 
+    if args.date == TODAY.strftime('%d'):
+        sys.exit(f"{RED}[ERROR]{RESET} Please use a date before: {datetime.now().strftime('%d %B %Y')}")  # nopep8
+
     if args.country:
         try:
             get_world(date=args.date, country=JSON_DATA['countries'][args.country.upper()])  # nopep8

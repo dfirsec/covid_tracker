@@ -105,7 +105,7 @@ def main():
         args.date = '0' + args.date
 
     if args.date == TODAY.strftime('%d'):
-        sys.exit(f"{RED}[ERROR]{RESET} Please use a date before: {datetime.now().strftime('%d %B %Y')}")  # nopep8
+        sys.exit(f"{RED}[ERROR]{RESET} Please use a date before: {datetime.now().strftime('%m/%d/%Y')}")  # nopep8
 
     if args.country:
         try:

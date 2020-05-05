@@ -64,23 +64,23 @@ def get_world(date=None, state=None, country=None, county=None):
                                         'Country_Region': 'Country'})
                 print(f"{CYAN}{country}{RESET}\n{('-' * 25)}")
                 country_confirmed = df.loc[df['Country'] == country]
-                print(f"Total Confirmed: {country_confirmed['Confirmed'].sum():>7,}")  #nopep8
-                print(f"Total Deaths: {country_confirmed['Deaths'].sum():>9,}")
-            
+                print(f"Total Confirmed: {country_confirmed['Confirmed'].sum():7,}")  # nopep8
+                print(f"Total Deaths: {country_confirmed['Deaths'].sum():9,}")
+
             if state:
                 df = df.rename(columns={'Admin2': 'County',
                                         'Province_State': 'State',
                                         'Country_Region': 'Country'})
                 print(df.loc[df['State'] == state].to_string(index=False))
-                state_confirmed = df.loc[df['State'] == state]  #nopep8
-                print(f"{('-' * 25)}\nTotal Confirmed: {state_confirmed['Confirmed'].sum():>7,}")  # nopep8
-                print(f"Total Deaths: {state_confirmed['Deaths'].sum():>9,}")
-                
+                state_confirmed = df.loc[df['State'] == state]  # nopep8
+                print(f"{('-' * 25)}\nTotal Confirmed: {state_confirmed['Confirmed'].sum():7,}")  # nopep8
+                print(f"Total Deaths: {state_confirmed['Deaths'].sum():9,}")
+
             if county:
-                    df = df.rename(columns={'Admin2': 'County',
-                                            'Province_State': 'State',
-                                            'Country_Region': 'Country'})
-                    print(df.loc[df['County'] == county].to_string(index=False))
+                df = df.rename(columns={'Admin2': 'County',
+                                        'Province_State': 'State',
+                                        'Country_Region': 'Country'})
+                print(df.loc[df['County'] == county].to_string(index=False))
 
 
 def main():
@@ -100,7 +100,7 @@ def main():
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
-        sys.exit(1) 
+        sys.exit(1)
 
     if args.country:
         try:
@@ -112,7 +112,8 @@ def main():
         try:
             get_world(date=args.date, state=JSON_DATA['states'][args.state.upper()])  # nopep8
         except KeyError:
-            sys.exit(f"{RED}[ERROR]{RESET} The state '{args.state}' was not found.")
+            sys.exit(
+                f"{RED}[ERROR]{RESET} The state '{args.state}' was not found.")
 
     if args.county:
         try:

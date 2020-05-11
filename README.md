@@ -17,33 +17,37 @@ optional arguments:
 Individual State report
 ```
 python covid_tracker.py -s ny
-County         State     Country Last_Update           Confirmed  Deaths  Recovered Percentage
-        Albany  New York  US      2020-05-05 02:32:34    1287        49   0           3.81%
-      Allegany  New York  US      2020-05-05 02:32:34      35         0   0            0.0%
-        Broome  New York  US      2020-05-05 02:32:34     334        22   0           6.59%
-   Cattaraugus  New York  US      2020-05-05 02:32:34      53         0   0            0.0%
-        Cayuga  New York  US      2020-05-05 02:32:34      51         1   0           1.96%
-    Chautauqua  New York  US      2020-05-05 02:32:34      37         4   0          10.81%
-       Chemung  New York  US      2020-05-05 02:32:34     126         1   0           0.79%
+County         State     Country Last_Update           Confirmed  Deaths  Recovered
+        Albany  New York  US      2020-05-11 02:32:30    1432        59   0
+      Allegany  New York  US      2020-05-11 02:32:30      36         0   0
+        Broome  New York  US      2020-05-11 02:32:30     373        23   0
+   Cattaraugus  New York  US      2020-05-11 02:32:30      60         0   0
+        Cayuga  New York  US      2020-05-11 02:32:30      58         1   0
 ...
+State: New York
 -------------------------
-Total Confirmed: 318,953
-Total Deaths:    24,999
+Total Confirmed: 335,395
+Total Deaths:    26,641
+Percentage:      7.94%
 ```
 
 County report
 ```
 python covid_tracker.py -c Albany
-County  State     Country Last_Update           Confirmed  Deaths  Recovered Percentage
- Albany  New York  US      2020-05-05 02:32:34  1287       49      0          3.81% 
+County: Albany
+-------------------------
+Total Confirmed: 1,440
+Total Deaths:    59
+Percentage:      4.1%
 ```
 
 
 Country Report
 ```
-python covid_tracker.py -c cn
-China
+python covid_tracker.py -w cn
+Country: China
 -------------------------
-Total Confirmed:  83,966
-Total Deaths:     4,637
+Total Confirmed: 84,010
+Total Deaths:    4,637
+Percentage:      5.52%
 ```

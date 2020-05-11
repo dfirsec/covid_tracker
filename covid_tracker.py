@@ -45,6 +45,7 @@ def connect(url):
         sys.exit("Issue encountered:", RequestException)
 
 
+
 def get_world(date=None, state=None, country=None, county=None):
     url = f"{W_URL}{TODAY.strftime('%m')}-{date}-{TODAY.year}.csv"
     data = StringIO(connect(url).text)
@@ -52,31 +53,34 @@ def get_world(date=None, state=None, country=None, county=None):
     with pd.option_context('display.colheader_justify', 'left'):
         columns = [1, 2, 3, 4, 7, 8, 9]
         df = pd.read_csv(data, delimiter=',', usecols=columns, keep_default_na=False)  # nopep8
+
+        def pct_confirmed(sel=None, opt=None):
+            confirmed = df.loc[df[sel] == opt]
+            pct = (100. * confirmed['Deaths'].sum()/confirmed['Confirmed'].sum()).round(2).astype(str) + '%'  # nopep8
+            print(f"{CYAN}{sel}: {opt}{RESET}\n{('-' * 25)}")
+            print(f"{'Total Confirmed:':16} {confirmed['Confirmed'].sum():,}")  # nopep8
+            print(f"{'Total Deaths:':16} {confirmed['Deaths'].sum():,}")
+            print(f"{'Percentage:':16} {pct}")
+
         if 'Deaths' in df:
-            df["Percentage"] = (100. * df['Deaths']/df['Confirmed']).round(2).astype(str) + '%'  # nopep8
             if country:
                 df = df.rename(columns={'Admin2': '',
                                         'Province_State': 'Province',
                                         'Country_Region': 'Country'})
-                print(f"{CYAN}{country}{RESET}\n{('-' * 25)}")
-                country_confirmed = df.loc[df['Country'] == country]
-                print(f"Total Confirmed: {country_confirmed['Confirmed'].sum():7,}")  # nopep8
-                print(f"Total Deaths: {country_confirmed['Deaths'].sum():9,}")
+                pct_confirmed(sel='Country', opt=country)
 
             if state:
                 df = df.rename(columns={'Admin2': 'County',
                                         'Province_State': 'State',
                                         'Country_Region': 'Country'})
                 print(df.loc[df['State'] == state].to_string(index=False))
-                state_confirmed = df.loc[df['State'] == state]  # nopep8
-                print(f"{('-' * 25)}\nTotal Confirmed: {state_confirmed['Confirmed'].sum():7,}")  # nopep8
-                print(f"Total Deaths: {state_confirmed['Deaths'].sum():9,}")
+                pct_confirmed(sel='State', opt=state)
 
             if county:
                 df = df.rename(columns={'Admin2': 'County',
                                         'Province_State': 'State',
                                         'Country_Region': 'Country'})
-                print(df.loc[df['County'] == county].to_string(index=False))
+                pct_confirmed(sel='County', opt=county)
 
 
 def main():

@@ -45,11 +45,11 @@ def connect(url):
         sys.exit("Issue encountered:", RequestException)
 
 
-
 def get_world(date=None, state=None, country=None, county=None):
     url = f"{W_URL}{TODAY.strftime('%m')}-{date}-{TODAY.year}.csv"
     data = StringIO(connect(url).text)
     pd.set_option('display.max_rows', None)
+    
     with pd.option_context('display.colheader_justify', 'left'):
         columns = [1, 2, 3, 4, 7, 8, 9]
         df = pd.read_csv(data, delimiter=',', usecols=columns, keep_default_na=False)  # nopep8
@@ -86,7 +86,7 @@ def get_world(date=None, state=None, country=None, county=None):
 def main():
     with open(DATA) as json_file:
         JSON_DATA = json.load(json_file)
-        
+
     d_date = datetime.today() - timedelta(days=1)
 
     parser = argparse.ArgumentParser()
@@ -95,7 +95,7 @@ def main():
                        help="Use 2 letter Country")
     group.add_argument('-s', '--state',
                        help="Use 2 letter State")
-    group.add_argument('-c', '--county',
+    parser.add_argument('-c', '--county',
                        help="Use 2 letter County")
     parser.add_argument('-d', '--date', default=d_date.strftime("%d"),
                         help="Use 2 digit day, default is minus 1 day")
@@ -104,7 +104,7 @@ def main():
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
-        
+
     if len(args.date) < 2:
         args.date = '0' + args.date
 

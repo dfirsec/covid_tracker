@@ -10,8 +10,8 @@ from pathlib import Path
 import pandas as pd
 import requests
 from colorama import Fore, Style, init
-from requests.exceptions import (ConnectionError, HTTPError, RequestException,
-                                 Timeout)
+from requests.exceptions import (ConnectionError, HTTPError,
+                                 RequestException, Timeout)
 
 
 TODAY = date.today()
@@ -24,6 +24,7 @@ init()
 CYAN = Fore.CYAN
 GREEN = Fore.GREEN
 RED = Fore.RED
+YELLOW = Fore.YELLOW
 RESET = Style.RESET_ALL
 
 
@@ -49,15 +50,16 @@ def get_world(date=None, state=None, country=None, county=None):
     url = f"{W_URL}{TODAY.strftime('%m')}-{date}-{TODAY.year}.csv"
     data = StringIO(connect(url).text)
     pd.set_option('display.max_rows', None)
-    
+
     with pd.option_context('display.colheader_justify', 'left'):
         columns = [1, 2, 3, 4, 7, 8, 9]
         df = pd.read_csv(data, delimiter=',', usecols=columns, keep_default_na=False)  # nopep8
 
         def pct_confirmed(sel=None, opt=None):
             confirmed = df.loc[df[sel] == opt]
+            show_date = f"{YELLOW}Date: {TODAY.strftime('%m')}-{date}-{TODAY.year}{RESET}"  # nopep8
             pct = (100. * confirmed['Deaths'].sum()/confirmed['Confirmed'].sum()).round(2).astype(str) + '%'  # nopep8
-            print(f"{CYAN}{sel}: {opt}{RESET}\n{('-' * 25)}")
+            print(f"{CYAN}{sel}: {opt}{RESET}\n{show_date}\n{('-' * 25)}")
             print(f"{'Total Confirmed:':16} {confirmed['Confirmed'].sum():,}")  # nopep8
             print(f"{'Total Deaths:':16} {confirmed['Deaths'].sum():,}")
             print(f"{'Percentage:':16} {pct}")
@@ -96,7 +98,7 @@ def main():
     group.add_argument('-s', '--state',
                        help="Use 2 letter State")
     parser.add_argument('-c', '--county',
-                       help="Use 2 letter County")
+                        help="Use 2 letter County")
     parser.add_argument('-d', '--date', default=d_date.strftime("%d"),
                         help="Use 2 digit day, default is minus 1 day")
     args = parser.parse_args()
@@ -108,7 +110,7 @@ def main():
     if len(args.date) < 2:
         args.date = '0' + args.date
 
-    if args.date == TODAY.strftime('%d'):
+    if args.date >= TODAY.strftime('%d'):
         sys.exit(f"{RED}[ERROR]{RESET} Please use a date before: {datetime.now().strftime('%m/%d/%Y')}")  # nopep8
 
     if args.country:

@@ -1,29 +1,28 @@
+
 import argparse
-import csv
 import json
-import re
 import sys
 from datetime import date, datetime, timedelta
 from io import StringIO
 from pathlib import Path
-from pprint import pprint
 
 import pandas as pd
 import requests
-from colorama import Back, Fore, Style, init
-from requests.exceptions import (ConnectTimeout, HTTPError, RequestException,
-                                 Timeout)
+from colorama import Fore, Style, init
+from requests.exceptions import ConnectionError, HTTPError, Timeout
 
-init()
-
-today = date.today()
-now = datetime.now()
-BASE_URL = 'https://covidtracking.com/api'
+TODAY = date.today()
+W_URL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"
 BASE_DIR = Path(__file__).resolve().parent
 DATA = BASE_DIR.joinpath('data.json')
 
-with open(DATA) as json_file:
-    json_data = json.load(json_file)
+# Console Colors
+init()
+CYAN = Fore.CYAN
+GREEN = Fore.GREEN
+RED = Fore.RED
+YELLOW = Fore.YELLOW
+RESET = Fore.RESET
 
 
 def connect(url):
@@ -31,7 +30,7 @@ def connect(url):
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:40.0) Gecko/20100101 Firefox/43.0"}  # nopep8
         resp = requests.get(url, timeout=5, headers=headers)
         if resp.status_code != 200:
-            quit(f'Failed to get data, Error Code: {resp.status_code}')
+            sys.exit(f'Failed to get data, Error Code: {resp.status_code}')
         else:
             return resp
     except HTTPError:
@@ -40,90 +39,106 @@ def connect(url):
         print("Timeout encountered:", Timeout)
     except ConnectionError:
         print("Connection Error:", ConnectionError)
-    except RequestException:
-        quit("Issue encountered:", RequestException)
+    except Exception as err:
+        sys.exit("Issue encountered:", err)
 
 
-def get_state_info(state=None):
-    url = BASE_URL + f"/states/info?state={state}"
-    if connect(url).json():
-        info = connect(url).json()
-        print(f"\nState Link:\n{info['covid19Site']:<6}\n")
-        print(f"Notes:\n{info['notes']:<6}")
-
-
-def get_all_states(date=None):
-    url = BASE_URL + f"/states/daily?date={today.year}{today.strftime('%m')}{date}"  # nopep8
-    if connect(url).json():
-        sp = []  # state positives
-        sd = []  # state deaths
-        for s in connect(url).json():
-            if 'death' in s and s['death'] != 0:
-                sp.append(s['positive'])
-                sd.append(s['death'])
-                percent = s['death'] / s['positive'] * 100
-                print(f"{s['state']:3} Positive: {s['positive']:<8,} Deaths: {s['death']:<6,} {round(percent, 2)}%")  # nopep8
-            elif 'death' in s:
-                percent = s['death'] / s['positive'] * 100
-                if s['death'] == 0:
-                    print(f"{Fore.GREEN}{s['state']:3} Positive: {s['positive']:<8,} Deaths: {s['death']:<6,} {round(percent, 2)}%{Style.RESET_ALL}")  # nopep8
-                else:
-                    print(f"{s['state']:3} Positive: {s['positive']:<8,} Deaths: {s['death']:<6,} {round(percent, 2)}%")  # nopep8
-            else:
-                print(f"{Fore.GREEN}{s['state']:3} Positive: {s['positive']:<8,} Deaths: 0{Style.RESET_ALL}")  # nopep8
-
-        print(f"\n{Fore.RED}Total: {sum(sp):,} | Deaths: {sum(sd):,} ({round(sum(sd)/sum(sp)*100, 2)}%){Style.RESET_ALL}")  # nopep8
-
-
-def get_worldwide(date=None, state=None, country=None):
-    url = f"https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{today.strftime('%m')}-{date}-{today.year}.csv"
+def get_world(date=None, state=None, country=None, county=None):
+    url = f"{W_URL}{TODAY.strftime('%m')}-{date}-{TODAY.year}.csv"
     data = StringIO(connect(url).text)
     pd.set_option('display.max_rows', None)
-    columns = [1, 2, 3, 4, 7, 8, 9]
-    df = pd.read_csv(data, delimiter=',', usecols=columns, keep_default_na=False)  # nopep8
-    if 'Deaths' in df:
-        df["Percentage"] = (100. * df['Deaths']/df['Confirmed']).round(2).astype(str) + '%'  # nopep8
-        if country:
-            print(f"{df.loc[df['Country_Region'] == country]}")
-        if state:
-            print(f"{df.loc[df['Province_State'] == state]}")
+
+    with pd.option_context('display.colheader_justify', 'left'):
+        columns = [1, 2, 3, 4, 7, 8, 9]
+        df = pd.read_csv(data, delimiter=',', usecols=columns, keep_default_na=False)  # nopep8
+
+        def pct_confirmed(sel=None, opt=None):
+            confirmed = df.loc[df[sel] == opt]
+            show_date = f"{YELLOW}Date: {TODAY.strftime('%m')}-{date}-{TODAY.year}{RESET}"  # nopep8
+            pct = (100. * confirmed['Deaths'].sum()/confirmed['Confirmed'].sum()).round(2).astype(str) + '%'  # nopep8
+            print(f"{CYAN}{sel}: {opt}{RESET}\n{show_date}\n{('-' * 25)}")
+            print(f"{'Total Confirmed:':16} {confirmed['Confirmed'].sum():,}")  # nopep8
+            print(f"{'Total Deaths:':16} {confirmed['Deaths'].sum():,}")
+            print(f"{'Percentage:':16} {pct}")
+
+        if 'Deaths' in df:
+            if country:
+                df = df.rename(columns={'Admin2': '',
+                                        'Province_State': 'Province',
+                                        'Country_Region': 'Country'})
+                pct_confirmed(sel='Country', opt=country)
+
+            if state:
+                df = df.rename(columns={'Admin2': 'County',
+                                        'Province_State': 'State',
+                                        'Country_Region': 'Country'})
+                print(df.loc[df['State'] == state].to_string(index=False))
+                pct_confirmed(sel='State', opt=state)
+
+            if county:
+                df = df.rename(columns={'Admin2': 'County',
+                                        'Province_State': 'State',
+                                        'Country_Region': 'Country'})
+                pct_confirmed(sel='County', opt=county)
 
 
 def main():
+    with open(DATA) as json_file:
+        JSON_DATA = json.load(json_file)
+
     d_date = datetime.today() - timedelta(days=1)
 
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('-a', '--all', action='store_true',
-                       help="Results for all States")
+    group.add_argument('-w', '--country',
+                       help="Use 2 letter Country")
     group.add_argument('-s', '--state',
-                        help="Use 2 letter State")
-    group.add_argument('-c', '--country',
-                        help="Use 2 letter Country")
+                       help="Use 2 letter State")
+    parser.add_argument('-c', '--county',
+                        help="Use 2 letter County")
     parser.add_argument('-d', '--date', default=d_date.strftime("%d"),
                         help="Use 2 digit day, default is minus 1 day")
     args = parser.parse_args()
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
-        quit(1)
+        sys.exit(1)
 
-    if args.all:
-        get_all_states(date=args.date)
+    if len(args.date) < 2:
+        args.date = '0' + args.date
+
+    if args.date >= TODAY.strftime('%d'):
+        sys.exit(f"{RED}[ERROR]{RESET} Please use a date before: {datetime.now().strftime('%m/%d/%Y')}")  # nopep8
 
     if args.country:
         try:
-            get_worldwide(date=args.date, country=json_data['countries'][args.country.upper()])  # nopep8
+            get_world(date=args.date, country=JSON_DATA['countries'][args.country.upper()])  # nopep8
         except KeyError:
-            quit(f"[ERROR] The country '{args.country}' was not found.")
+            sys.exit(f"{RED}[ERROR]{RESET} The country '{args.country}' was not found.")  # nopep8
 
     if args.state:
         try:
-            get_worldwide(date=args.date,
-                          state=json_data['states'][args.state.upper()])
+            get_world(date=args.date, state=JSON_DATA['states'][args.state.upper()])  # nopep8
         except KeyError:
-            quit(f"[ERROR] The state '{args.state}' was not found.")
+            sys.exit(
+                f"{RED}[ERROR]{RESET} The state '{args.state}' was not found.")
+
+    if args.county:
+        try:
+            get_world(date=args.date, county=args.county.title())  # nopep8
+        except KeyError:
+            sys.exit(f"{RED}[ERROR]{RESET} The county '{args.county}' was not found.")  # nopep8
 
 
 if __name__ == "__main__":
+    banner = fr'''
+       ______           _     __   ______                __
+      / ____/___ _   __(_)___/ /  /_  __/________ ______/ /_____  _____
+     / /   / __ \ | / / / __  /    / / / ___/ __ `/ ___/ //_/ _ \/ ___/
+    / /___/ /_/ / |/ / / /_/ /    / / / /  / /_/ / /__/ ,< /  __/ /
+    \____/\____/|___/_/\__,_/    /_/ /_/   \__,_/\___/_/|_|\___/_/
+    
+    '''
+
+    print(f"{CYAN}{banner}{RESET}")
     main()

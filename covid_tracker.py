@@ -7,13 +7,13 @@ from pathlib import Path
 
 import pandas as pd
 import requests
-from colorama import Fore, Style, init
+from colorama import Fore, init
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 TODAY = date.today()
 W_URL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"
-BASE_DIR = Path(__file__).resolve().parent
-DATA = BASE_DIR.joinpath('data.json')
+PARENT = Path(__file__).resolve().parent
+DATA = PARENT.joinpath('data.json')
 
 # Console Colors
 init()
@@ -39,7 +39,7 @@ def connect(url):
     except ConnectionError:
         print("Connection Error:", ConnectionError)
     except Exception as err:
-        sys.exit("Issue encountered:", err)
+        sys.exit(f"Issue encountered: {err}")
 
 
 def get_world(date=None, state=None, country=None, county=None):

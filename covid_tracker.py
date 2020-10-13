@@ -10,6 +10,11 @@ import requests
 from colorama import Fore, init
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
+
+__author__ = "DFIRSec (@pulsecode)"
+__version__ = "0.0.3"
+__description__ = "Retrieve Covid-19 stats by Country, State, and County"
+
 TODAY = date.today()
 W_URL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"
 PARENT = Path(__file__).resolve().parent

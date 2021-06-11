@@ -1,6 +1,7 @@
 import argparse
 import json
 import sys
+import warnings
 from datetime import date, datetime, timedelta
 from io import StringIO
 from pathlib import Path
@@ -15,7 +16,9 @@ __version__ = "0.0.3"
 __description__ = "Retrieve Covid-19 stats by Country, State, and County"
 
 TODAY = date.today()
-W_URL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"
+W_URL = (
+    "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"
+)
 PARENT = Path(__file__).resolve().parent
 DATA = PARENT.joinpath("data.json")
 
@@ -30,7 +33,7 @@ RESET = Fore.RESET
 
 def connect(url):
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:40.0) Gecko/20100101 Firefox/43.0"}  
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:40.0) Gecko/20100101 Firefox/43.0"}
         resp = requests.get(url, timeout=5, headers=headers)
         if resp.status_code != 200:
             sys.exit(f"Failed to get data, Error Code: {resp.status_code}")
@@ -53,16 +56,21 @@ def get_world(date=None, state=None, country=None, county=None):
 
     with pd.option_context("display.colheader_justify", "left"):
         columns = [1, 2, 3, 4, 7, 8, 9]
-        df = pd.read_csv(data, delimiter=",", usecols=columns, keep_default_na=False)  
+        df = pd.read_csv(data, delimiter=",", usecols=columns, keep_default_na=False)
 
         def pct_confirmed(sel=None, opt=None):
+            warnings.simplefilter("error", RuntimeWarning)
             confirmed = df.loc[df[sel] == opt]
-            show_date = f"{YELLOW}Date: {TODAY.strftime('%m')}-{date}-{TODAY.year}{RESET}"  
-            pct = (100.0 * confirmed["Deaths"].sum() / confirmed["Confirmed"].sum()).round(2).astype(str) + "%"  
-            print(f"{CYAN}{sel}: {opt}{RESET}\n{show_date}\n{('-' * 25)}")
-            print(f"{'Total Confirmed:':16} {confirmed['Confirmed'].sum():,}")  
-            print(f"{'Total Deaths:':16} {confirmed['Deaths'].sum():,}")
-            print(f"{'Death %:':16} {pct}")
+            show_date = f"{YELLOW}Date: {TODAY.strftime('%m')}-{date}-{TODAY.year}{RESET}"
+            try:
+                pct = (100.0 * confirmed["Deaths"].sum() / confirmed["Confirmed"].sum()).round(2).astype(str) + "%"
+            except (UnboundLocalError, RuntimeWarning):
+                print(f"{Fore.RED}[Error]{Fore.RESET} Please check option argument, e.g., 'c' for County, 'w' for World, 's' for State")
+            else:
+                print(f"{CYAN}{sel}: {opt}{RESET}\n{show_date}\n{('-' * 25)}")
+                print(f"{'Total Confirmed:':16} {confirmed['Confirmed'].sum():,}")
+                print(f"{'Total Deaths:':16} {confirmed['Deaths'].sum():,}")
+                print(f"{'Death %:':16} {pct}")
 
         if "Deaths" in df:
             if country:
@@ -101,25 +109,25 @@ def main():
         args.date = "0" + args.date
 
     if args.date >= TODAY.strftime("%d"):
-        sys.exit(f"{RED}[ERROR]{RESET} Please use a date before: {datetime.now().strftime('%m/%d/%Y')}")  
+        sys.exit(f"{RED}[ERROR]{RESET} Please use a date before: {datetime.now().strftime('%m/%d/%Y')}")
 
     if args.country:
         try:
-            get_world(date=args.date, country=JSON_DATA["countries"][args.country.upper()])  
+            get_world(date=args.date, country=JSON_DATA["countries"][args.country.upper()])
         except KeyError:
-            sys.exit(f"{RED}[ERROR]{RESET} The country '{args.country}' was not found.")  
+            sys.exit(f"{RED}[ERROR]{RESET} The country '{args.country}' was not found.")
 
     if args.state:
         try:
-            get_world(date=args.date, state=JSON_DATA["states"][args.state.upper()])  
+            get_world(date=args.date, state=JSON_DATA["states"][args.state.upper()])
         except KeyError:
             sys.exit(f"{RED}[ERROR]{RESET} The state '{args.state}' was not found.")
 
     if args.county:
         try:
-            get_world(date=args.date, county=args.county.title())  
+            get_world(date=args.date, county=args.county.title())
         except KeyError:
-            sys.exit(f"{RED}[ERROR]{RESET} The county '{args.county}' was not found.")  
+            sys.exit(f"{RED}[ERROR]{RESET} The county '{args.county}' was not found.")
 
 
 if __name__ == "__main__":

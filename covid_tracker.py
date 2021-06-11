@@ -45,8 +45,6 @@ def connect(url):
         print("Timeout encountered:", Timeout)
     except ConnectionError:
         print("Connection Error:", ConnectionError)
-    except Exception as err:
-        sys.exit(f"Issue encountered: {err}")
 
 
 def get_world(date_sel=None, state=None, country=None, county=None):

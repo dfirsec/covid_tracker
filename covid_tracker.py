@@ -49,8 +49,8 @@ def connect(url):
         sys.exit(f"Issue encountered: {err}")
 
 
-def get_world(date=None, state=None, country=None, county=None):
-    url = f"{W_URL}{TODAY.strftime('%m')}-{date}-{TODAY.year}.csv"
+def get_world(date_sel=None, state=None, country=None, county=None):
+    url = f"{W_URL}{TODAY.strftime('%m')}-{date_sel}-{TODAY.year}.csv"
     data = StringIO(connect(url).text)
     pd.set_option("display.max_rows", None)
 
@@ -61,7 +61,7 @@ def get_world(date=None, state=None, country=None, county=None):
         def pct_confirmed(sel=None, opt=None):
             warnings.simplefilter("error", RuntimeWarning)
             confirmed = df.loc[df[sel] == opt]
-            show_date = f"{YELLOW}Date: {TODAY.strftime('%m')}-{date}-{TODAY.year}{RESET}"
+            show_date = f"{YELLOW}Date: {TODAY.strftime('%m')}-{date_sel}-{TODAY.year}{RESET}"
             try:
                 pct = (100.0 * confirmed["Deaths"].sum() / confirmed["Confirmed"].sum()).round(2).astype(str) + "%"
             except (UnboundLocalError, RuntimeWarning):
@@ -113,19 +113,19 @@ def main():
 
     if args.country:
         try:
-            get_world(date=args.date, country=JSON_DATA["countries"][args.country.upper()])
+            get_world(date_sel=args.date, country=JSON_DATA["countries"][args.country.upper()])
         except KeyError:
             sys.exit(f"{RED}[ERROR]{RESET} The country '{args.country}' was not found.")
 
     if args.state:
         try:
-            get_world(date=args.date, state=JSON_DATA["states"][args.state.upper()])
+            get_world(date_sel=args.date, state=JSON_DATA["states"][args.state.upper()])
         except KeyError:
             sys.exit(f"{RED}[ERROR]{RESET} The state '{args.state}' was not found.")
 
     if args.county:
         try:
-            get_world(date=args.date, county=args.county.title())
+            get_world(date_sel=args.date, county=args.county.title())
         except KeyError:
             sys.exit(f"{RED}[ERROR]{RESET} The county '{args.county}' was not found.")
 

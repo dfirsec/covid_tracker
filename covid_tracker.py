@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 import requests
 from colorama import Fore, init
-from requests.exceptions import ConnectionError, HTTPError, Timeout
+from requests.exceptions import HTTPError, Timeout
 
 __author__ = "DFIRSec (@pulsecode)"
 __version__ = "0.0.3"
@@ -123,7 +123,7 @@ def main():
 
 
 if __name__ == "__main__":
-    banner = fr"""
+    banner = r"""
        ______           _     __   ______                __
       / ____/___ _   __(_)___/ /  /_  __/________ ______/ /_____  _____
      / /   / __ \ | / / / __  /    / / / ___/ __ `/ ___/ //_/ _ \/ ___/

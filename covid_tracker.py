@@ -16,9 +16,7 @@ __version__ = "0.0.3"
 __description__ = "Retrieve Covid-19 stats by Country, State, and County"
 
 TODAY = date.today()
-W_URL = (
-    "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"
-)
+W_URL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"
 PARENT = Path(__file__).resolve().parent
 DATA = PARENT.joinpath("data.json")
 
@@ -33,7 +31,9 @@ RESET = Fore.RESET
 
 def connect(url):
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:40.0) Gecko/20100101 Firefox/43.0"}
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:40.0) Gecko/20100101 Firefox/43.0"
+        }
         resp = requests.get(url, timeout=5, headers=headers)
         if resp.status_code != 200:
             sys.exit(f"Failed to get data, Error Code: {resp.status_code}")
@@ -59,11 +59,17 @@ def get_world(date_sel=None, state=None, country=None, county=None):
         def pct_confirmed(sel=None, opt=None):
             warnings.simplefilter("error", RuntimeWarning)
             confirmed = df.loc[df[sel] == opt]
-            show_date = f"{YELLOW}Date: {TODAY.strftime('%m')}-{date_sel}-{TODAY.year}{RESET}"
+            show_date = (
+                f"{YELLOW}Date: {TODAY.strftime('%m')}-{date_sel}-{TODAY.year}{RESET}"
+            )
             try:
-                pct = (100.0 * confirmed["Deaths"].sum() / confirmed["Confirmed"].sum()).round(2).astype(str) + "%"
+                pct = (
+                    100.0 * confirmed["Deaths"].sum() / confirmed["Confirmed"].sum()
+                ).round(2).astype(str) + "%"
             except (UnboundLocalError, RuntimeWarning):
-                print(f"{Fore.RED}[Error]{Fore.RESET} Please check option argument, e.g., 'c' for County, 'w' for World, 's' for State")
+                print(
+                    f"{Fore.RED}[Error]{Fore.RESET} Please check option argument, e.g., 'c' for County, 'w' for World, 's' for State"
+                )
             else:
                 print(f"{CYAN}{sel}: {opt}{RESET}\n{show_date}\n{('-' * 25)}")
                 print(f"{'Total Confirmed:':16} {confirmed['Confirmed'].sum():,}")
@@ -72,16 +78,34 @@ def get_world(date_sel=None, state=None, country=None, county=None):
 
         if "Deaths" in df:
             if country:
-                df = df.rename(columns={"Admin2": "", "Province_State": "Province", "Country_Region": "Country"})
+                df = df.rename(
+                    columns={
+                        "Admin2": "",
+                        "Province_State": "Province",
+                        "Country_Region": "Country",
+                    }
+                )
                 pct_confirmed(sel="Country", opt=country)
 
             if state:
-                df = df.rename(columns={"Admin2": "County", "Province_State": "State", "Country_Region": "Country"})
+                df = df.rename(
+                    columns={
+                        "Admin2": "County",
+                        "Province_State": "State",
+                        "Country_Region": "Country",
+                    }
+                )
                 print(df.loc[df["State"] == state].to_string(index=False))
                 pct_confirmed(sel="State", opt=state)
 
             if county:
-                df = df.rename(columns={"Admin2": "County", "Province_State": "State", "Country_Region": "Country"})
+                df = df.rename(
+                    columns={
+                        "Admin2": "County",
+                        "Province_State": "State",
+                        "Country_Region": "Country",
+                    }
+                )
                 pct_confirmed(sel="County", opt=county)
 
 
@@ -96,7 +120,12 @@ def main():
     group.add_argument("-w", "--country", help="Use 2 letter Country")
     group.add_argument("-s", "--state", help="Use 2 letter State")
     parser.add_argument("-c", "--county", help="Use 2 letter County")
-    parser.add_argument("-d", "--date", default=d_date.strftime("%d"), help="Use 2 digit day, default is minus 1 day")
+    parser.add_argument(
+        "-d",
+        "--date",
+        default=d_date.strftime("%d"),
+        help="Use 2 digit day, default is minus 1 day",
+    )
     args = parser.parse_args()
 
     if len(sys.argv) == 1:
@@ -107,11 +136,15 @@ def main():
         args.date = "0" + args.date
 
     if args.date >= TODAY.strftime("%d"):
-        sys.exit(f"{RED}[ERROR]{RESET} Please use a date before: {datetime.now().strftime('%m/%d/%Y')}")
+        sys.exit(
+            f"{RED}[ERROR]{RESET} Please use a date before: {datetime.now().strftime('%m/%d/%Y')}"
+        )
 
     if args.country:
         try:
-            get_world(date_sel=args.date, country=JSON_DATA["countries"][args.country.upper()])
+            get_world(
+                date_sel=args.date, country=JSON_DATA["countries"][args.country.upper()]
+            )
         except KeyError:
             sys.exit(f"{RED}[ERROR]{RESET} The country '{args.country}' was not found.")
 

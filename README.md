@@ -1,5 +1,6 @@
-Usage
-```
+# Usage
+
+```text
 usage: covid_tracker.py [-h] [-w COUNTRY | -s STATE | -c COUNTY] [-d DATE]
 
 optional arguments:
@@ -13,9 +14,9 @@ optional arguments:
   -d DATE, --date DATE  Use 2 digit day, default is minus 1 day
 ```
 
+## Individual State report
 
-Individual State report
-```
+```text
 python covid_tracker.py -s ny
 County         State     Country Last_Update           Confirmed  Deaths  Recovered
         Albany  New York  US      2020-05-11 02:32:30    1432        59   0
@@ -31,8 +32,9 @@ Total Deaths:    26,641
 Percentage:      7.94%
 ```
 
-County report
-```
+## County report
+
+```text
 python covid_tracker.py -c Albany
 County: Albany
 -------------------------
@@ -41,9 +43,9 @@ Total Deaths:    59
 Percentage:      4.1%
 ```
 
+## Country Report
 
-Country Report
-```
+```text
 python covid_tracker.py -w cn
 Country: China
 -------------------------

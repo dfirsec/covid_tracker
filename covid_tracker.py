@@ -32,6 +32,13 @@ RESET = Fore.RESET
 
 
 def connect(url):
+    """
+    Tries to connect to the url, if it fails, it exits the program with an error code, if it
+    succeeds, it returns the response.
+
+    :param url: The URL of the website you want to scrape
+    :return: The response object.
+    """
     try:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:40.0) Gecko/20100101 Firefox/43.0"}
         resp = requests.get(url, timeout=5, headers=headers)
@@ -45,6 +52,7 @@ def connect(url):
         print("Timeout encountered:", Timeout)
     except ConnectionError:
         print("Connection Error:", ConnectionError)
+    return None
 
 
 def get_world(date_sel=None, state=None, country=None, county=None):
@@ -54,42 +62,50 @@ def get_world(date_sel=None, state=None, country=None, county=None):
 
     with pd.option_context("display.colheader_justify", "left"):
         columns = [1, 2, 3, 4, 7, 8, 9]
-        df = pd.read_csv(data, delimiter=",", usecols=columns, keep_default_na=False)
+        data_frame = pd.read_csv(data, delimiter=",", usecols=columns, keep_default_na=False)
 
         def pct_confirmed(sel=None, opt=None):
             warnings.simplefilter("error", RuntimeWarning)
-            confirmed = df.loc[df[sel] == opt]
+            confirmed = data_frame.loc[data_frame[sel] == opt]
             show_date = f"{YELLOW}Date: {TODAY.strftime('%m')}-{date_sel}-{TODAY.year}{RESET}"
             try:
                 pct = (100.0 * confirmed["Deaths"].sum() / confirmed["Confirmed"].sum()).round(2).astype(str) + "%"
             except (UnboundLocalError, RuntimeWarning):
-                print(f"{Fore.RED}[Error]{Fore.RESET} Please check option argument, e.g., 'c' for County, 'w' for World, 's' for State")
+                print(
+                    f"{Fore.RED}[Error]{Fore.RESET} Option argument, e.g., 'c' for County, 'w' for World, 's' for State"
+                )
             else:
                 print(f"{CYAN}{sel}: {opt}{RESET}\n{show_date}\n{('-' * 25)}")
                 print(f"{'Total Confirmed:':16} {confirmed['Confirmed'].sum():,}")
                 print(f"{'Total Deaths:':16} {confirmed['Deaths'].sum():,}")
                 print(f"{'Death %:':16} {pct}")
 
-        if "Deaths" in df:
+        if "Deaths" in data_frame:
             if country:
-                df = df.rename(columns={"Admin2": "", "Province_State": "Province", "Country_Region": "Country"})
+                data_frame = data_frame.rename(
+                    columns={"Admin2": "", "Province_State": "Province", "Country_Region": "Country"}
+                )
                 pct_confirmed(sel="Country", opt=country)
 
             if state:
-                df = df.rename(columns={"Admin2": "County", "Province_State": "State", "Country_Region": "Country"})
-                print(df.loc[df["State"] == state].to_string(index=False))
+                data_frame = data_frame.rename(
+                    columns={"Admin2": "County", "Province_State": "State", "Country_Region": "Country"}
+                )
+                print(data_frame.loc[data_frame["State"] == state].to_string(index=False))
                 pct_confirmed(sel="State", opt=state)
 
             if county:
-                df = df.rename(columns={"Admin2": "County", "Province_State": "State", "Country_Region": "Country"})
+                data_frame = data_frame.rename(
+                    columns={"Admin2": "County", "Province_State": "State", "Country_Region": "Country"}
+                )
                 pct_confirmed(sel="County", opt=county)
 
 
 def main():
-    with open(DATA) as json_file:
-        JSON_DATA = json.load(json_file)
+    with open(DATA, encoding="utf-8") as json_file:
+        json_data = json.load(json_file)
 
-    d_date = datetime.today() - timedelta(days=1)
+    d_date = datetime.now() - timedelta(days=1)
 
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
@@ -111,13 +127,13 @@ def main():
 
     if args.country:
         try:
-            get_world(date_sel=args.date, country=JSON_DATA["countries"][args.country.upper()])
+            get_world(date_sel=args.date, country=json_data["countries"][args.country.upper()])
         except KeyError:
             sys.exit(f"{RED}[ERROR]{RESET} The country '{args.country}' was not found.")
 
     if args.state:
         try:
-            get_world(date_sel=args.date, state=JSON_DATA["states"][args.state.upper()])
+            get_world(date_sel=args.date, state=json_data["states"][args.state.upper()])
         except KeyError:
             sys.exit(f"{RED}[ERROR]{RESET} The state '{args.state}' was not found.")
 
@@ -129,14 +145,14 @@ def main():
 
 
 if __name__ == "__main__":
-    banner = r"""
+    BANNER = r"""
        ______           _     __   ______                __
       / ____/___ _   __(_)___/ /  /_  __/________ ______/ /_____  _____
      / /   / __ \ | / / / __  /    / / / ___/ __ `/ ___/ //_/ _ \/ ___/
     / /___/ /_/ / |/ / / /_/ /    / / / /  / /_/ / /__/ ,< /  __/ /
     \____/\____/|___/_/\__,_/    /_/ /_/   \__,_/\___/_/|_|\___/_/
-    
+
     """
 
-    print(f"{CYAN}{banner}{RESET}")
+    print(f"{CYAN}{BANNER}{RESET}")
     main()

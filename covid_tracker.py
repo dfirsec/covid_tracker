@@ -2,20 +2,23 @@ import argparse
 import json
 import sys
 import warnings
-from datetime import date, datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 from io import StringIO
 from pathlib import Path
 
 import pandas as pd
 import requests
-from colorama import Fore, init
-from requests.exceptions import HTTPError, Timeout
+from colorama import Fore
+from colorama import init
+from requests.exceptions import HTTPError
+from requests.exceptions import Timeout
 
 __author__ = "DFIRSec (@pulsecode)"
 __version__ = "0.0.3"
 __description__ = "Retrieve Covid-19 stats by Country, State, and County"
 
-TODAY = date.today()
+TODAY = datetime.now().astimezone()
 W_URL = (
     "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"
 )
@@ -31,14 +34,8 @@ YELLOW = Fore.YELLOW
 RESET = Fore.RESET
 
 
-def connect(url):
-    """
-    Tries to connect to the url, if it fails, it exits the program with an error code, if it
-    succeeds, it returns the response.
-
-    :param url: The URL of the website you want to scrape
-    :return: The response object.
-    """
+def connect(url: str) -> requests.Response | None:
+    """Connect to URL and return response."""
     try:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:40.0) Gecko/20100101 Firefox/43.0"}
         resp = requests.get(url, timeout=5, headers=headers)
@@ -55,7 +52,8 @@ def connect(url):
     return None
 
 
-def get_world(date_sel=None, state=None, country=None, county=None):
+def get_world(date_sel: str = "", state: str = "", country: str = "", county: str = "") -> None:
+    """Get Covid-19 data from URL and parse."""
     url = f"{W_URL}{TODAY.strftime('%m')}-{date_sel}-{TODAY.year}.csv"
     data = StringIO(connect(url).text)
     pd.set_option("display.max_rows", None)
@@ -64,7 +62,8 @@ def get_world(date_sel=None, state=None, country=None, county=None):
         columns = [1, 2, 3, 4, 7, 8, 9]
         data_frame = pd.read_csv(data, delimiter=",", usecols=columns, keep_default_na=False)
 
-        def pct_confirmed(sel=None, opt=None):
+        def pct_confirmed(sel: str = "", opt: str = "") -> None:
+            """Calculate percent of confirmed cases."""
             warnings.simplefilter("error", RuntimeWarning)
             confirmed = data_frame.loc[data_frame[sel] == opt]
             show_date = f"{YELLOW}Date: {TODAY.strftime('%m')}-{date_sel}-{TODAY.year}{RESET}"
@@ -101,11 +100,12 @@ def get_world(date_sel=None, state=None, country=None, county=None):
                 pct_confirmed(sel="County", opt=county)
 
 
-def main():
+def main() -> None:
+    """Main function."""
     with open(DATA, encoding="utf-8") as json_file:
         json_data = json.load(json_file)
 
-    d_date = datetime.now() - timedelta(days=1)
+    d_date = datetime.now().astimezone() - timedelta(days=1)
 
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
@@ -123,7 +123,7 @@ def main():
         args.date = "0" + args.date
 
     if args.date >= TODAY.strftime("%d"):
-        sys.exit(f"{RED}[ERROR]{RESET} Please use a date before: {datetime.now().strftime('%m/%d/%Y')}")
+        sys.exit(f"{RED}[ERROR]{RESET} Please use a date before: {datetime.now().astimezone.strftime('%m/%d/%Y')}")
 
     if args.country:
         try:
